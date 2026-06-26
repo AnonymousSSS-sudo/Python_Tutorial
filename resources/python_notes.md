@@ -1,7 +1,7 @@
 # Python 知识笔记
 
 > 参照《Python Cheat Sheet》知识库整理  
-> 更新时间：2026-06-26（已补充进阶内容）
+> 更新时间：2026-06-26（已补充练习题与解析）
 
 ---
 
@@ -242,6 +242,97 @@ nicename: Optional[str] = None   # 可以是 str 或 None
 | 可选值 | `name: Optional[str] = None` |
 | 函数参数 | `def fn(x: int) -> str:` |
 | 强制常量 | `MAX: Final[int] = 100` |
+
+---
+
+*参考来源：本地知识库《Python Cheat Sheet》*
+
+---
+
+## 九、练习题与解析
+
+### 🔴 题目：引用陷阱（进阶）
+
+以下代码最终输出什么？请解释内存发生了什么：
+
+```python
+def modify(lst):
+    lst.append(99)
+    lst = [0, 0, 0, 0]   # 这行有什么作用？
+
+data = [1, 2, 3]
+modify(data)
+print(data)
+```
+
+**运行结果：**
+
+```
+[1, 2, 3, 99]
+```
+
+> `lst = [0, 0, 0, 0]` 这一行**确实被执行了**，
+> 但它只是让局部变量 `lst` 指向了一个新对象，函数外部的 `data` 完全不受影响。
+
+---
+
+### 🧠 解析：「修改对象」vs「重新赋值」
+
+```python
+def modify(lst):
+    lst.append(99)   # ← 直接修改了原对象，data 也受影响
+    lst = [0,0,0,0]  # ← 让局部变量 lst 指向新对象，与 data 断开联系
+```
+
+**内存变化图示：**
+
+```
+调用 modify(data) 时：
+  data ───→ [1, 2, 3]    （同一个对象）
+  lst  ───→ [1, 2, 3]
+
+执行 lst.append(99) 后：
+  data ───→ [1, 2, 3, 99]   ← 原对象被修改
+  lst  ───→ [1, 2, 3, 99]
+
+执行 lst = [0,0,0,0] 后：
+  data ───→ [1, 2, 3, 99]   ← 原对象不变！
+  lst  ───→ [0, 0, 0, 0]    ← lst 换了指向，跟 data 断开了
+```
+
+**核心规则：**
+
+| 操作 | 效果 |
+|------|------|
+| `lst.append(99)` | **修改原对象**，`data` 也受影响 |
+| `lst = [0,0,0,0]` | **重新赋值**，`lst` 指向新对象，`data` 不受影响 |
+
+---
+
+### ✅ 正确做法：如何让 data 变成 `[0,0,0,0]`
+
+**方式一：用 `return` 返回新列表**
+
+```python
+def modify(lst):
+    lst.append(99)
+    lst = [0, 0, 0, 0]
+    return lst             # 返回新列表
+
+data = modify(data)        # 用返回值覆盖 data
+print(data)                # [0, 0, 0, 0]
+```
+
+**方式二：切片赋值（原地修改对象内容）**
+
+```python
+def modify(lst):
+    lst.append(99)
+    lst[:] = [0, 0, 0, 0]  # 修改原对象的内容，而非替换引用
+
+modify(data)
+print(data)                # [0, 0, 0, 0]
+```
 
 ---
 
