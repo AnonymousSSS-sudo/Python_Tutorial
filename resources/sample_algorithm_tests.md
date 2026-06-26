@@ -187,3 +187,157 @@ def word_count(sentence: str) -> dict:
 | 代码量 | 多 | 少 | 极少 |
 | 适合场景 | 理解 dict 原理 | 日常手写首选 | 工程/竞赛首选 |
 | 时间复杂度 | O(n log n) | O(n log n) | O(n log n) |
+
+---
+
+### Task03 - 集合求交集 / 差集 / 并集
+
+**题目**：有两组学生选课数据，用集合操作完成三个问题。
+
+```python
+course_a = {"Alice", "Bob", "Charlie", "David"}
+course_b = {"Bob", "David", "Eve", "Frank"}
+```
+
+| 问题 | 期望输出 |
+|---|---|
+| 同时选了两门课的学生？ | `{'Bob', 'David'}` |
+| 只选了课程 A、没选课程 B 的学生？ | `{'Alice', 'Charlie'}` |
+| 两门课总共有多少不重复的学生？ | `6` |
+
+---
+
+#### 集合操作速查
+
+| 操作 | 含义 | 方法写法 | 运算符写法 |
+|---|---|---|---|
+| 交集 | 两集合共有的元素 | `a.intersection(b)` | `a & b` |
+| 差集 | 在 A 中但不在 B 中 | `a.difference(b)` | `a - b` |
+| 并集 | 两集合所有元素（自动去重） | `a.union(b)` | `a \| b` |
+
+> [!NOTE]
+> 差集有方向性：`A - B` ≠ `B - A`，顺序决定结果。
+
+---
+
+#### 解答
+
+```python
+course_a = {"Alice", "Bob", "Charlie", "David"}
+course_b = {"Bob", "David", "Eve", "Frank"}
+
+# 问题1：交集 —— 同时选了两门课
+both = course_a & course_b
+# 或：both = course_a.intersection(course_b)
+print(both)    # {'Bob', 'David'}
+
+# 问题2：差集 —— 只选了 A 没选 B
+only_a = course_a - course_b
+# 或：only_a = course_a.difference(course_b)
+print(only_a)  # {'Alice', 'Charlie'}
+
+# 问题3：并集 + 计数 —— 总不重复人数
+total = len(course_a | course_b)
+# 或：total = len(course_a.union(course_b))
+print(total)   # 6
+```
+
+> [!TIP]
+> 运算符写法（`&`、`-`、`|`）更简洁直观，方法写法（`.intersection()`、`.difference()`、`.union()`）语义更明确，两者效果完全等价。
+
+---
+
+### Task04 - 列表 + 字典：成绩分析器
+
+**题目**：给定一个列表嵌套字典的学生数据，返回包含四项统计结果的字典。
+
+```python
+students = [
+    {"name": "Alice",   "score": 92},
+    {"name": "Bob",     "score": 78},
+    {"name": "Charlie", "score": 85},
+    {"name": "David",   "score": 60},
+    {"name": "Eve",     "score": 95},
+]
+```
+
+| 字段 | 说明 | 期望输出 |
+|---|---|---|
+| `"highest"` | 最高分学生姓名 | `"Eve"` |
+| `"lowest"` | 最低分学生姓名 | `"David"` |
+| `"average"` | 平均分（保留1位小数） | `82.0` |
+| `"passed"` | 及格（≥60）的学生名单 | `["Alice", "Bob", "Charlie", "David", "Eve"]` |
+
+---
+
+#### 核心操作解析
+
+**① `max()` / `min()` + `key` 参数 — 取最值学生**
+
+`key` 告诉 `max()`/`min()` 按哪个字段比较，返回的是**整个字典**，需再取 `"name"`：
+
+```python
+highest_student = max(students, key=lambda s: s["score"])
+highest_name    = highest_student["name"]   # → "Eve"
+
+lowest_student  = min(students, key=lambda s: s["score"])
+lowest_name     = lowest_student["name"]    # → "David"
+```
+
+**② `sum()` + `len()` + `round()` — 计算平均分**
+
+用生成器表达式提取所有分数，求和后除以人数，`round()` 保留小数位：
+
+```python
+average = round(sum(s["score"] for s in students) / len(students), 1)
+# → 82.0
+```
+
+**③ 列表推导式 + 条件过滤 — 及格名单**
+
+在推导式中同时完成**过滤**和**提取姓名**两步：
+
+```python
+passed = [s["name"] for s in students if s["score"] >= 60]
+# → ["Alice", "Bob", "Charlie", "David", "Eve"]
+```
+
+> [!WARNING]
+> 注意区分：题目要求 `"passed"` 是**名字列表**，而非人数。
+> `[s for s in students if ...]` 取的是整个字典；
+> `[s["name"] for s in students if ...]` 才是取名字。
+
+---
+
+#### 完整代码
+
+```python
+def analyze_scores(students: list) -> dict:
+    # 最高分学生姓名
+    highest = max(students, key=lambda s: s["score"])["name"]
+    # 最低分学生姓名
+    lowest  = min(students, key=lambda s: s["score"])["name"]
+    # 平均分，保留 1 位小数
+    average = round(sum(s["score"] for s in students) / len(students), 1)
+    # 及格学生名单（>=60）
+    passed  = [s["name"] for s in students if s["score"] >= 60]
+
+    return {
+        "highest": highest,
+        "lowest":  lowest,
+        "average": average,
+        "passed":  passed,
+    }
+```
+
+---
+
+#### 知识点汇总
+
+| 操作 | 用法 | 说明 |
+|---|---|---|
+| `max(lst, key=...)` | `key=lambda s: s["score"]` | 按指定字段取最大值元素 |
+| `min(lst, key=...)` | 同上 | 按指定字段取最小值元素 |
+| 生成器表达式 | `sum(s["score"] for s in lst)` | 省内存，适合单次聚合 |
+| `round(x, n)` | `round(82.0, 1)` | 保留 n 位小数 |
+| 列表推导式过滤 | `[s["name"] for s in lst if ...]` | 同时完成筛选与字段提取 |
